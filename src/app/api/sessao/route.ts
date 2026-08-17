@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 const SCRIPT_URL = process.env.NEXT_PUBLIC_SCRIPT_URL || ''
 
 export async function GET() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const token = cookieStore.get('acamp_sessao')?.value
   if (!token) return NextResponse.json({ uid: null }, { status: 401 })
 
