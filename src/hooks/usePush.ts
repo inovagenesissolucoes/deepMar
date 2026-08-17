@@ -14,12 +14,21 @@ export function usePush() {
       const perm = await Notification.requestPermission()
       if (perm !== 'granted') return false
 
+      const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
+      const padding = '='.repeat((4 - (key.length % 4)) % 4)
+      const base64 = (key + padding).replace(/-/g, '+').replace(/_/g, '/')
+      const rawData = window.atob(base64)
+      const buffer = new ArrayBuffer(rawData.length)
+      const view = new Uint8Array(buffer)
+      for (let i = 0; i < rawData.length; i++) {
+        view[i] = rawData.charCodeAt(i)
+      }
+
       const sub = await sw.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(
-          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
-        ),
+        applicationServerKey: buffer,
       })
+
       const json = sub.toJSON()
       await rpc('salvarPush', {
         endpoint: json.endpoint,
@@ -36,11 +45,4 @@ export function usePush() {
   }, [])
 
   return { ativo, carregando, ativarPush }
-}
-
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = window.atob(base64)
-  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)))
 }
