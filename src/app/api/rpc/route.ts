@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 const SCRIPT_URL = process.env.NEXT_PUBLIC_SCRIPT_URL || ''
 
 export async function POST(req: NextRequest) {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const token = cookieStore.get('acamp_sessao')?.value
 
   const body = await req.json()
@@ -22,14 +22,13 @@ export async function POST(req: NextRequest) {
 
     const data = await res.json()
 
-    // Se for cadastro, seta o cookie
     if (action === 'cadastrar' && data.status === 'ok' && data.token) {
       const response = NextResponse.json(data)
       response.cookies.set('acamp_sessao', data.token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 90, // 90 dias
+        maxAge: 60 * 60 * 24 * 90,
         path: '/',
       })
       return response
@@ -40,7 +39,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(data)
-  } catch (e) {
+  } catch {
     return NextResponse.json({ message: 'Falha na comunicação com o servidor' }, { status: 500 })
   }
 }
